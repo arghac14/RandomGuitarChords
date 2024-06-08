@@ -15,8 +15,12 @@
             margin: 20px 0;
         }
         #queue {
-            font-size: 24px;
+            font-size: 32px;
             margin-top: 20px;
+        }
+        .next-chord:first-child {
+            font-size: 48px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -38,9 +42,9 @@
     <script>
         let chords = [];
         let interval = 3;
-        let chordIndex = 0;
         let timeoutId;
         let shuffleTimeoutId;
+        let queue = [];
 
         document.getElementById('startButton').addEventListener('click', startDisplay);
 
@@ -48,14 +52,11 @@
             const chordsInput = document.getElementById('chords').value;
             chords = chordsInput.split(',').map(chord => chord.trim());
             interval = parseInt(document.getElementById('interval').value, 10);
-            chordIndex = 0;
 
             if (chords.length > 0 && interval > 0) {
                 // Clear any existing timeouts
                 clearTimeout(timeoutId);
                 clearTimeout(shuffleTimeoutId);
-                // Shuffle the chords array
-                shuffleArray(chords);
                 // Start displaying chords
                 displayChord();
                 // Schedule the shuffle
@@ -69,19 +70,15 @@
             if (chords.length === 0) return;
 
             // Display the current chord
-            const currentChord = chords[chordIndex];
+            const currentChord = queue.shift() || getRandomChord();
             document.getElementById('chord').innerText = currentChord;
 
-            // Display the next 5 chords in the queue
-            const queue = [];
-            for (let i = 1; i <= 5; i++) {
-                const nextIndex = (chordIndex + i) % chords.length;
-                queue.push(chords[nextIndex]);
-            }
-            document.getElementById('queue').innerText = 'Next: ' + queue.join(', ');
+            // Add a random chord to the queue
+            const randomChord = getRandomChord();
+            queue.push(randomChord);
 
-            // Update the chord index for the next display
-            chordIndex = (chordIndex + 1) % chords.length;
+            // Display the queue
+            updateQueueDisplay();
 
             // Set the timeout for the next chord display
             timeoutId = setTimeout(displayChord, interval * 1000);
@@ -89,8 +86,21 @@
 
         function scheduleShuffle() {
             shuffleTimeoutId = setInterval(() => {
-                shuffleArray(chords);
+                // Shuffle the queue
+                shuffleArray(queue);
+                // Display the updated queue
+                updateQueueDisplay();
             }, interval * 2000); // Shuffle every double interval
+        }
+
+        function updateQueueDisplay() {
+            const queueDisplay = queue.map(chord => `<div class="next-chord">${chord}</div>`).join('');
+            document.getElementById('queue').innerHTML = queueDisplay;
+        }
+
+        function getRandomChord() {
+            const randomIndex = Math.floor(Math.random() * chords.length);
+            return chords[randomIndex];
         }
 
         function shuffleArray(array) {
